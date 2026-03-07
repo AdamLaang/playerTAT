@@ -1,0 +1,17 @@
+{
+  "k": 10,
+  "max_batches": 2,
+  "model_path": "artifacts/tat/model.pt",
+  "variants": [
+    {
+      "variant": "baseline",
+      "cutoff_shift": -1,
+      "disable_position_input": false,
+      "disable_team_context": false,
+      "n_embeddings": 256,
+      "embedding_dim": 256,
+      "same_position_at_k": 0.5257812738418579,
+      "within_player_coherence": 0.745744813233614
+    }
+  ]
+}

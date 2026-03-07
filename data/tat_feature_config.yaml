@@ -1,0 +1,88 @@
+continuous_features:
+- minutes_played_resolved
+- goals
+- own_goal
+- age
+- log_marketvalue
+- understat_xg
+- understat_xa
+- understat_xg90
+- understat_xa90
+- understat_npxg
+- understat_xgchain
+- understat_xgbuildup
+- understat_shots
+- understat_key_passes
+- understat_goals
+- understat_assists
+- team_goals
+- opp_goals
+- team_shots
+- opp_shots
+- team_shots_on_target
+- opp_shots_on_target
+- team_possession
+- opp_possession
+- goals_per90
+- own_goal_per90
+- understat_xg_per90
+- understat_xa_per90
+- understat_npxg_per90
+- understat_xgchain_per90
+- understat_xgbuildup_per90
+- understat_shots_per90
+- understat_key_passes_per90
+- understat_goals_per90
+- understat_assists_per90
+- understat_xg_is_missing
+- understat_xa_is_missing
+- understat_npxg_is_missing
+- understat_xgchain_is_missing
+- understat_xgbuildup_is_missing
+- understat_shots_is_missing
+- understat_key_passes_is_missing
+- understat_goals_is_missing
+- understat_assists_is_missing
+- log_marketvalue_is_missing
+categorical_features:
+- position_id
+- home_away
+gap_feature: days_since_prev_match
+id_columns:
+  player_id: player_id
+  match_id: match_id
+  match_date: match_date
+  season: season
+  season_id: season_id
+vocab_sizes:
+  position: 5
+  team: 31
+position_vocab:
+  Unknown: 0
+  Attacker: 1
+  Defender: 2
+  Goalkeeper: 3
+  Midfielder: 4
+season_vocab:
+  2018/2019: 0
+  2019/2020: 1
+  2020/2021: 2
+  2021/2022: 3
+  2022/2023: 4
+  2023/2024: 5
+  2024/2025: 6
+  2025/2026: 7
+per90_source_columns:
+- goals
+- own_goal
+- understat_xg
+- understat_xa
+- understat_npxg
+- understat_xgchain
+- understat_xgbuildup
+- understat_shots
+- understat_key_passes
+- understat_goals
+- understat_assists
+min_minutes_for_per90: 30.0
+min_minutes_required: 1.0

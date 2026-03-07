@@ -1,0 +1,68 @@
+[2026-03-06 14:36:21 UTC] Using device: cpu
+[2026-03-06 14:36:21 UTC] Output directory: artifacts/tat
+[2026-03-06 14:36:21 UTC] Train batches/epoch=495 Val batches/epoch=90 Epochs=40
+[2026-03-06 14:36:21 UTC] Causal cutoff shift=-1
+[2026-03-06 14:36:21 UTC] Loss plot will be updated at: artifacts/tat/loss_curves.svg
+[2026-03-06 14:47:08 UTC] epoch=01 train_loss=0.2062 val_loss=0.1432 train_rec=0.2062 val_rec=0.1432 train_con=1.942747e+00 val_con=2.794928e+00 train_skipped=0 val_skipped=0 epoch_time_sec=646.93
+[2026-03-06 14:47:08 UTC] New best checkpoint saved: artifacts/tat/model.pt (val_loss=0.143182)
+[2026-03-06 14:59:50 UTC] epoch=02 train_loss=0.1225 val_loss=0.1278 train_rec=0.1225 val_rec=0.1278 train_con=2.082057e+00 val_con=2.611393e+00 train_skipped=0 val_skipped=0 epoch_time_sec=761.62
+[2026-03-06 14:59:50 UTC] New best checkpoint saved: artifacts/tat/model.pt (val_loss=0.127809)
+[2026-03-06 15:11:32 UTC] epoch=03 train_loss=0.1183 val_loss=0.1301 train_rec=0.1134 val_rec=0.1220 train_con=9.709950e-02 val_con=1.622057e-01 train_skipped=0 val_skipped=0 epoch_time_sec=701.78
+[2026-03-06 15:22:40 UTC] epoch=04 train_loss=0.1118 val_loss=0.1267 train_rec=0.1089 val_rec=0.1182 train_con=2.888276e-02 val_con=8.533718e-02 train_skipped=0 val_skipped=0 epoch_time_sec=668.39
+[2026-03-06 15:22:40 UTC] New best checkpoint saved: artifacts/tat/model.pt (val_loss=0.126744)
+[2026-03-06 15:34:25 UTC] epoch=05 train_loss=0.1087 val_loss=0.1230 train_rec=0.1065 val_rec=0.1166 train_con=2.189545e-02 val_con=6.411665e-02 train_skipped=0 val_skipped=0 epoch_time_sec=704.61
+[2026-03-06 15:34:25 UTC] New best checkpoint saved: artifacts/tat/model.pt (val_loss=0.123022)
+[2026-03-06 15:46:12 UTC] epoch=06 train_loss=0.1063 val_loss=0.1205 train_rec=0.1043 val_rec=0.1147 train_con=1.970936e-02 val_con=5.811542e-02 train_skipped=0 val_skipped=0 epoch_time_sec=707.24
+[2026-03-06 15:46:12 UTC] New best checkpoint saved: artifacts/tat/model.pt (val_loss=0.120532)
+[2026-03-06 15:57:57 UTC] epoch=07 train_loss=0.1048 val_loss=0.1187 train_rec=0.1030 val_rec=0.1136 train_con=1.768856e-02 val_con=5.082934e-02 train_skipped=0 val_skipped=0 epoch_time_sec=704.64
+[2026-03-06 15:57:57 UTC] New best checkpoint saved: artifacts/tat/model.pt (val_loss=0.118727)
+[2026-03-06 16:09:43 UTC] epoch=08 train_loss=0.1038 val_loss=0.1166 train_rec=0.1022 val_rec=0.1119 train_con=1.608792e-02 val_con=4.684540e-02 train_skipped=0 val_skipped=0 epoch_time_sec=705.56
+[2026-03-06 16:09:43 UTC] New best checkpoint saved: artifacts/tat/model.pt (val_loss=0.116584)
+[2026-03-06 16:21:28 UTC] epoch=09 train_loss=0.1025 val_loss=0.1163 train_rec=0.1010 val_rec=0.1122 train_con=1.476517e-02 val_con=4.155134e-02 train_skipped=0 val_skipped=0 epoch_time_sec=705.40
+[2026-03-06 16:21:28 UTC] New best checkpoint saved: artifacts/tat/model.pt (val_loss=0.116335)
+[2026-03-06 16:33:17 UTC] epoch=10 train_loss=0.1011 val_loss=0.1142 train_rec=0.0997 val_rec=0.1101 train_con=1.410567e-02 val_con=4.183247e-02 train_skipped=0 val_skipped=0 epoch_time_sec=708.91
+[2026-03-06 16:33:17 UTC] New best checkpoint saved: artifacts/tat/model.pt (val_loss=0.114241)
+[2026-03-06 16:45:05 UTC] epoch=11 train_loss=0.1004 val_loss=0.1135 train_rec=0.0989 val_rec=0.1094 train_con=1.415105e-02 val_con=4.111761e-02 train_skipped=0 val_skipped=0 epoch_time_sec=707.54
+[2026-03-06 16:45:05 UTC] New best checkpoint saved: artifacts/tat/model.pt (val_loss=0.113527)
+[2026-03-06 16:56:52 UTC] epoch=12 train_loss=0.0993 val_loss=0.1130 train_rec=0.0980 val_rec=0.1089 train_con=1.351043e-02 val_con=4.101008e-02 train_skipped=0 val_skipped=0 epoch_time_sec=707.21
+[2026-03-06 16:56:52 UTC] New best checkpoint saved: artifacts/tat/model.pt (val_loss=0.113027)
+[2026-03-06 17:08:43 UTC] epoch=13 train_loss=0.0987 val_loss=0.1120 train_rec=0.0973 val_rec=0.1081 train_con=1.319279e-02 val_con=3.934757e-02 train_skipped=0 val_skipped=0 epoch_time_sec=710.58
+[2026-03-06 17:08:43 UTC] New best checkpoint saved: artifacts/tat/model.pt (val_loss=0.112036)
+[2026-03-06 17:20:25 UTC] epoch=14 train_loss=0.0980 val_loss=0.1112 train_rec=0.0966 val_rec=0.1074 train_con=1.303557e-02 val_con=3.876814e-02 train_skipped=0 val_skipped=0 epoch_time_sec=702.63
+[2026-03-06 17:20:25 UTC] New best checkpoint saved: artifacts/tat/model.pt (val_loss=0.111242)
+[2026-03-06 17:32:02 UTC] epoch=15 train_loss=0.0976 val_loss=0.1103 train_rec=0.0963 val_rec=0.1065 train_con=1.388242e-02 val_con=3.736727e-02 train_skipped=0 val_skipped=0 epoch_time_sec=696.80
+[2026-03-06 17:32:02 UTC] New best checkpoint saved: artifacts/tat/model.pt (val_loss=0.110250)
+[2026-03-06 17:43:50 UTC] epoch=16 train_loss=0.0967 val_loss=0.1112 train_rec=0.0954 val_rec=0.1075 train_con=1.242779e-02 val_con=3.741511e-02 train_skipped=0 val_skipped=0 epoch_time_sec=708.25
+[2026-03-06 17:55:34 UTC] epoch=17 train_loss=0.0962 val_loss=0.1097 train_rec=0.0949 val_rec=0.1061 train_con=1.236599e-02 val_con=3.538674e-02 train_skipped=0 val_skipped=0 epoch_time_sec=703.46
+[2026-03-06 17:55:34 UTC] New best checkpoint saved: artifacts/tat/model.pt (val_loss=0.109659)
+[2026-03-06 18:07:22 UTC] epoch=18 train_loss=0.0954 val_loss=0.1103 train_rec=0.0942 val_rec=0.1068 train_con=1.229155e-02 val_con=3.462734e-02 train_skipped=0 val_skipped=0 epoch_time_sec=707.65
+[2026-03-06 18:19:08 UTC] epoch=19 train_loss=0.0950 val_loss=0.1096 train_rec=0.0939 val_rec=0.1063 train_con=1.098117e-02 val_con=3.352546e-02 train_skipped=0 val_skipped=0 epoch_time_sec=706.72
+[2026-03-06 18:19:08 UTC] New best checkpoint saved: artifacts/tat/model.pt (val_loss=0.109604)
+[2026-03-06 18:30:50 UTC] epoch=20 train_loss=0.0943 val_loss=0.1101 train_rec=0.0931 val_rec=0.1066 train_con=1.153028e-02 val_con=3.502354e-02 train_skipped=0 val_skipped=0 epoch_time_sec=702.01
+[2026-03-06 18:42:30 UTC] epoch=21 train_loss=0.0938 val_loss=0.1093 train_rec=0.0926 val_rec=0.1059 train_con=1.144305e-02 val_con=3.413370e-02 train_skipped=0 val_skipped=0 epoch_time_sec=699.88
+[2026-03-06 18:42:30 UTC] New best checkpoint saved: artifacts/tat/model.pt (val_loss=0.109303)
+[2026-03-06 18:54:08 UTC] epoch=22 train_loss=0.0934 val_loss=0.1098 train_rec=0.0922 val_rec=0.1064 train_con=1.202551e-02 val_con=3.359317e-02 train_skipped=0 val_skipped=0 epoch_time_sec=697.17
+[2026-03-06 19:05:45 UTC] epoch=23 train_loss=0.0926 val_loss=0.1103 train_rec=0.0915 val_rec=0.1070 train_con=1.170247e-02 val_con=3.302013e-02 train_skipped=0 val_skipped=0 epoch_time_sec=697.14
+[2026-03-06 19:17:26 UTC] epoch=24 train_loss=0.0923 val_loss=0.1111 train_rec=0.0912 val_rec=0.1079 train_con=1.110845e-02 val_con=3.234349e-02 train_skipped=0 val_skipped=0 epoch_time_sec=700.76
+[2026-03-06 19:29:10 UTC] epoch=25 train_loss=0.0920 val_loss=0.1098 train_rec=0.0908 val_rec=0.1066 train_con=1.146256e-02 val_con=3.185553e-02 train_skipped=0 val_skipped=0 epoch_time_sec=704.29
+[2026-03-06 19:40:39 UTC] epoch=26 train_loss=0.0915 val_loss=0.1101 train_rec=0.0904 val_rec=0.1070 train_con=1.101112e-02 val_con=3.148521e-02 train_skipped=0 val_skipped=0 epoch_time_sec=689.59
+[2026-03-06 19:52:27 UTC] epoch=27 train_loss=0.0910 val_loss=0.1095 train_rec=0.0900 val_rec=0.1062 train_con=1.005998e-02 val_con=3.303821e-02 train_skipped=0 val_skipped=0 epoch_time_sec=707.44
+[2026-03-06 20:04:13 UTC] epoch=28 train_loss=0.0905 val_loss=0.1102 train_rec=0.0895 val_rec=0.1071 train_con=1.035955e-02 val_con=3.112633e-02 train_skipped=0 val_skipped=0 epoch_time_sec=706.49
+[2026-03-06 20:15:57 UTC] epoch=29 train_loss=0.0903 val_loss=0.1094 train_rec=0.0892 val_rec=0.1063 train_con=1.040254e-02 val_con=3.144293e-02 train_skipped=0 val_skipped=0 epoch_time_sec=703.82
+[2026-03-06 20:27:44 UTC] epoch=30 train_loss=0.0899 val_loss=0.1104 train_rec=0.0888 val_rec=0.1073 train_con=1.086376e-02 val_con=3.159695e-02 train_skipped=0 val_skipped=0 epoch_time_sec=706.76
+[2026-03-06 20:39:30 UTC] epoch=31 train_loss=0.0899 val_loss=0.1099 train_rec=0.0888 val_rec=0.1068 train_con=1.101011e-02 val_con=3.103847e-02 train_skipped=0 val_skipped=0 epoch_time_sec=705.93
+[2026-03-06 20:51:11 UTC] epoch=32 train_loss=0.0893 val_loss=0.1096 train_rec=0.0883 val_rec=0.1065 train_con=1.042842e-02 val_con=3.049808e-02 train_skipped=0 val_skipped=0 epoch_time_sec=700.92
+[2026-03-06 21:03:03 UTC] epoch=33 train_loss=0.0893 val_loss=0.1108 train_rec=0.0883 val_rec=0.1077 train_con=1.035741e-02 val_con=3.102010e-02 train_skipped=0 val_skipped=0 epoch_time_sec=712.15
+[2026-03-06 21:14:49 UTC] epoch=34 train_loss=0.0892 val_loss=0.1088 train_rec=0.0882 val_rec=0.1059 train_con=1.061625e-02 val_con=2.968931e-02 train_skipped=0 val_skipped=0 epoch_time_sec=705.67
+[2026-03-06 21:14:49 UTC] New best checkpoint saved: artifacts/tat/model.pt (val_loss=0.108835)
+[2026-03-06 21:26:35 UTC] epoch=35 train_loss=0.0893 val_loss=0.1095 train_rec=0.0882 val_rec=0.1064 train_con=1.077129e-02 val_con=3.076327e-02 train_skipped=0 val_skipped=0 epoch_time_sec=706.45
+[2026-03-06 21:38:26 UTC] epoch=36 train_loss=0.0890 val_loss=0.1102 train_rec=0.0880 val_rec=0.1071 train_con=1.052136e-02 val_con=3.092927e-02 train_skipped=0 val_skipped=0 epoch_time_sec=710.98
+[2026-03-06 21:50:12 UTC] epoch=37 train_loss=0.0889 val_loss=0.1096 train_rec=0.0879 val_rec=0.1064 train_con=1.067390e-02 val_con=3.209182e-02 train_skipped=0 val_skipped=0 epoch_time_sec=706.29
+[2026-03-06 22:02:02 UTC] epoch=38 train_loss=0.0892 val_loss=0.1088 train_rec=0.0880 val_rec=0.1058 train_con=1.142363e-02 val_con=3.022643e-02 train_skipped=0 val_skipped=0 epoch_time_sec=709.40
+[2026-03-06 22:29:14 UTC] epoch=39 train_loss=0.0890 val_loss=0.1090 train_rec=0.0880 val_rec=0.1059 train_con=1.011633e-02 val_con=3.069719e-02 train_skipped=0 val_skipped=0 epoch_time_sec=696.50
+[2026-03-06 22:41:44 UTC] epoch=40 train_loss=0.0889 val_loss=0.1096 train_rec=0.0879 val_rec=0.1065 train_con=1.046531e-02 val_con=3.087662e-02 train_skipped=0 val_skipped=0 epoch_time_sec=750.26
+[2026-03-06 22:41:44 UTC] Saved best model: artifacts/tat/model.pt
+[2026-03-06 22:41:44 UTC] Saved history JSON: artifacts/tat/training_history.json
+[2026-03-06 22:41:44 UTC] Saved history CSV: artifacts/tat/training_history.csv
+[2026-03-06 22:41:44 UTC] Saved history JSONL: artifacts/tat/training_history.jsonl
+[2026-03-06 22:41:44 UTC] Loss plot path: artifacts/tat/loss_curves.svg

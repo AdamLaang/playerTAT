@@ -1,0 +1,305 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{mathtools}
+\usepackage{setspace}
+\setstretch{1.1}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+
+\title{Temporal Autoencoder Transformer (TAT) for Football Player Embeddings\\Technical Report}
+\author{}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Objective and Design Intent}
+
+We aim to learn a representation
+\begin{equation}
+ z_{p,t} \in \mathbb{R}^{d_z}
+\end{equation}
+for player $p$ at fixture index $t$, using only historical information available before fixture $t$ (causal setup).
+
+The embedding should:
+\begin{enumerate}[label=\arabic*)]
+  \item encode temporal form and role-consistent behavior,
+  \item remain usable for pre-match tasks (forecasting, retrieval, clustering),
+  \item avoid memorizing identity via player/team/opponent IDs.
+\end{enumerate}
+
+Current implementation enforces (3) by disabling team/opponent identity embeddings and, by default, disabling direct position embeddings.
+
+\section{Data and Notation}
+
+Each player-match row includes IDs/time, context, and numeric features. After preprocessing, each player $p$ has an ordered sequence
+\begin{equation}
+\{x_{p,1}, x_{p,2}, \dots, x_{p,T_p}\},\quad x_{p,t}\in\mathbb{R}^{F}.
+\end{equation}
+
+Per-timestep context:
+\begin{itemize}
+  \item $h_{p,t}\in\{0,1\}$: home/away,
+  \item $q_{p,t}\in\mathbb{N}$: position ID,
+  \item $g_{p,t}\in\mathbb{R}_{\ge 0}$: days since previous match.
+\end{itemize}
+
+\subsection{Time-based split}
+If seasons are chronologically ordered $(s_1,\dots,s_K)$:
+\begin{itemize}
+  \item train: $(s_1,\dots,s_{K-2})$
+  \item validation: $s_{K-1}$
+  \item test: $s_K$
+\end{itemize}
+All imputation/scaler parameters are fit on train only.
+
+\section{Feature Engineering and Normalization}
+
+\subsection{Per-90 transformation}
+For stat $u_{p,t}$ with minutes $m_{p,t}$:
+\begin{equation}
+ u^{90}_{p,t} = u_{p,t}\cdot\frac{90}{\max(m_{p,t},m_{\min})},
+\end{equation}
+with $m_{\min}=30$ by default.
+
+\subsection{Missing indicators}
+For sparse feature $u$, add
+\begin{equation}
+ \mathbb{1}_{\text{missing}}(u_{p,t})\in\{0,1\}.
+\end{equation}
+
+\subsection{Scaling}
+For each continuous feature $f$:
+\begin{enumerate}[label=\arabic*)]
+  \item impute with train median $\tilde\mu_f$,
+  \item standardize:
+\end{enumerate}
+\begin{equation}
+ \hat x_f = \frac{x_f-\mu_f}{\sigma_f},
+\end{equation}
+where $(\mu_f,\sigma_f)$ are fit on train.
+
+\section{Causal Window Construction}
+
+Window length is $L$. For each target fixture index $t$, define cutoff
+\begin{equation}
+ \tau = t + s,
+\end{equation}
+where $s=\texttt{cutoff\_shift}$. Current default is $s=-1$, so history is up to $t-1$.
+
+Construct right-padded window
+\begin{equation}
+ X_{p,t}\in\mathbb{R}^{L\times F},
+\end{equation}
+from timesteps $[\max(1,\tau-L+1),\dots,\tau]$ with trailing padding.
+
+Padding mask:
+\begin{equation}
+M^{\text{pad}}_{p,t,i}=
+\begin{cases}
+1,&\text{if row }i\text{ is padding},\\
+0,&\text{otherwise}.
+\end{cases}
+\end{equation}
+
+Right-padding is used to avoid causal-attention numerical instability that can occur with left-padding.
+
+\section{Corruption Operator (Denoising Views)}
+
+Two views are sampled independently per window.
+
+For valid row $i$, feature $j$:
+\begin{align}
+ B^{\text{feat}}_{ij} &\sim \text{Bernoulli}(p_{\text{feat}}),\\
+ b^{\text{row}}_i &\sim \text{Bernoulli}(p_{\text{match}}),\quad B^{\text{row}}_{ij}=b^{\text{row}}_i.
+\end{align}
+
+Final reconstruction mask:
+\begin{equation}
+ B_{ij}=\left(B^{\text{feat}}_{ij}\lor B^{\text{row}}_{ij}\right)\land \neg M^{\text{pad}}_i.
+\end{equation}
+
+Noise on unmasked valid entries:
+\begin{equation}
+ \epsilon_{ij}\sim\mathcal{N}(0,\sigma^2),\quad
+ \tilde X_{ij}=
+ \begin{cases}
+ 0,&B_{ij}=1,\\
+ X_{ij}+\epsilon_{ij},&B_{ij}=0,\;\neg M^{\text{pad}}_i.
+ \end{cases}
+\end{equation}
+
+\section{Encoder Architecture}
+
+\subsection{Input projection and context fusion}
+For timestep $i$:
+\begin{equation}
+ h_i^{(0)} = \phi(\tilde x_i)
+ + e_{\text{home}}(h_i)
+ + e_{\text{recency}}(i)
+ + \gamma\!\left(\log(1+g_i)\right)
+ + \mathbb{1}_{\text{pos}}\,e_{\text{pos}}(q_i).
+\end{equation}
+
+Here $\phi$ is an input MLP + LayerNorm, $\gamma$ is a small gap-MLP, and $\mathbb{1}_{\text{pos}}=1$ only if \texttt{use\_position\_embedding=true}.
+
+\subsection{Temporal transformer (causal)}
+Upper-triangular causal mask:
+\begin{equation}
+A_{ij}=
+\begin{cases}
+-\infty,&j>i,\\
+0,&j\le i.
+\end{cases}
+\end{equation}
+
+Sequence output:
+\begin{equation}
+ H = \text{Transformer}(H^{(0)}, A, M^{\text{pad}}).
+\end{equation}
+
+\subsection{Readout embedding}
+Take last valid hidden state $h_{\text{last}}$ and project:
+\begin{equation}
+ z = \frac{W_z h_{\text{last}}}{\|W_z h_{\text{last}}\|_2} \in \mathbb{R}^{d_z}.
+\end{equation}
+
+\subsection{Reconstruction head}
+Predict all features per timestep:
+\begin{equation}
+ \hat X = \psi(H),
+\end{equation}
+where $\psi$ is a two-layer MLP.
+
+\section{Training Objectives}
+
+\subsection{Masked reconstruction loss}
+Huber loss over masked entries only:
+\begin{equation}
+\mathcal{L}_{\text{rec}}^{(v)}=
+\frac{1}{\sum B^{(v)}}
+\sum_{i,j} B_{ij}^{(v)}\,\ell_\delta\!\left(\hat X_{ij}^{(v)},X_{ij}\right),
+\end{equation}
+\begin{equation}
+\mathcal{L}_{\text{rec}} = \frac{1}{2}\left(\mathcal{L}_{\text{rec}}^{(1)}+\mathcal{L}_{\text{rec}}^{(2)}\right).
+\end{equation}
+
+\subsection{Mixed-role contrastive InfoNCE}
+Given batch size $B$, concatenate both views:
+\begin{equation}
+ Z=[z^{(1)}_1,\dots,z^{(1)}_B,z^{(2)}_1,\dots,z^{(2)}_B]\in\mathbb{R}^{2B\times d_z}.
+\end{equation}
+
+Positive index:
+\begin{equation}
+ \pi(i)=(i+B)\bmod 2B.
+\end{equation}
+
+Similarity:
+\begin{equation}
+ s_{ik}=\frac{\cos(Z_i,Z_k)}{\tau}.
+\end{equation}
+
+For anchor $i$, negatives are all $k\neq i,\pi(i)$ with role-based weight
+\begin{equation}
+w_{ik}=
+\begin{cases}
+\alpha_{\text{in}},&r_i=r_k,\\
+\alpha_{\text{cross}},&r_i\neq r_k.
+\end{cases}
+\end{equation}
+
+Weighted negative logits:
+\begin{equation}
+ \tilde s_{ik}=s_{ik}+\log w_{ik}.
+\end{equation}
+
+Per-anchor loss:
+\begin{equation}
+\mathcal{L}_i = -\log\frac{\exp(s_{i\pi(i)})}{\exp(s_{i\pi(i)}) + \sum_{k\in\mathcal{N}_i}\exp(\tilde s_{ik})}.
+\end{equation}
+
+Batch contrastive loss:
+\begin{equation}
+\mathcal{L}_{\text{con}} = \frac{1}{2B}\sum_{i=1}^{2B}\mathcal{L}_i.
+\end{equation}
+
+Current defaults: $\alpha_{\text{cross}}=1.0$, $\alpha_{\text{in}}=0.75$.
+
+\subsection{Total objective}
+\begin{equation}
+ \mathcal{L}=\mathcal{L}_{\text{rec}} + \lambda_{\text{con}}(e)\,\mathcal{L}_{\text{con}}.
+\end{equation}
+
+$\lambda_{\text{con}}(e)$ is warm-started: 0 during warmup, then linearly ramped to target.
+
+\section{Optimization}
+
+\begin{itemize}
+  \item Optimizer: AdamW
+  \item Learning-rate schedule: linear warmup + cosine decay
+  \item Gradient clipping: $\|g\|_2\le 1$
+  \item AMP enabled on CUDA
+\end{itemize}
+
+Non-finite batch guard is active: any batch with non-finite total/reconstruction/contrastive loss is skipped and logged.
+
+\section{Why This Model}
+
+\begin{enumerate}[label=\arabic*)]
+  \item Causal windows ($t-1$) make embeddings valid pre-match.
+  \item Masked denoising reconstruction encourages robust temporal structure learning.
+  \item Contrastive alignment across two corruptions improves representation geometry.
+  \item Mixed-role negatives avoid trivial GK-vs-outfield-only geometry while retaining role signal.
+  \item No player/team/opponent identity embeddings reduces lookup-table behavior.
+  \item Position embedding disabled by default reduces direct role leakage.
+\end{enumerate}
+
+\section{Evaluation Metrics}
+
+\subsection{Same-position@$k$}
+For each test embedding, retrieve $k$ nearest neighbors by cosine similarity:
+\begin{equation}
+\text{SamePos@}k = \frac{1}{N}\sum_{i=1}^{N}\frac{1}{k}\sum_{j\in\text{NN}_k(i)}\mathbb{1}[\text{pos}_j=\text{pos}_i].
+\end{equation}
+
+\subsection{Within-player coherence}
+For player $p$ with embeddings $\{z_{p,t}\}$:
+\begin{equation}
+\text{Coh}(p)=\frac{1}{|\mathcal{P}_p|}\sum_{(a,b)\in\mathcal{P}_p}\cos(z_{p,a},z_{p,b}),
+\end{equation}
+with $\mathcal{P}_p$ all unordered within-player pairs. Overall coherence is the mean over players with at least two embeddings.
+
+\section{Limitations and Extensions}
+
+\begin{itemize}
+  \item Understat-heavy features can still induce strong role separation, especially GK vs outfield.
+  \item Same-position retrieval can be inflated if role information leaks into training context.
+  \item A single global model may underfit specialist goalkeeper dynamics.
+\end{itemize}
+
+Possible extensions:
+\begin{itemize}
+  \item shared backbone + role-specific heads,
+  \item harder negative mining within outfield sub-roles,
+  \item downstream supervised probes for tactical role/performance.
+\end{itemize}
+
+\section{Reproducibility Artifacts}
+
+The pipeline saves:
+\begin{itemize}
+  \item best checkpoint (`model.pt`),
+  \item scaler payload (`tat\_scaler.joblib`),
+  \item feature config (`tat\_feature\_config.yaml`),
+  \item epoch logs (`training\_history.csv/json/jsonl`),
+  \item textual training log (`train.log`),
+  \item loss plot (`loss\_curves.svg`).
+\end{itemize}
+
+These are sufficient to reproduce inference and embedding extraction.
+
+\end{document}

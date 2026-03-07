@@ -1,0 +1,340 @@
+# Temporal Autoencoder Transformer (TAT) for Football Player Embeddings
+
+## 1. Objective and Design Intent
+
+We aim to learn a representation
+\[
+z_{p,t} \in \mathbb{R}^{d_z}
+\]
+for player \(p\) at fixture index \(t\), using only historical information available **before** fixture \(t\) (causal setup).
+
+The embedding should:
+
+1. encode temporal form and role-consistent behavior,
+2. remain usable for pre-match tasks (forecasting / retrieval / clustering),
+3. avoid memorizing identity via player/team/opponent IDs.
+
+The current implementation enforces (3) by disabling team/opponent identity embeddings and (by default) disabling direct position embeddings.
+
+---
+
+## 2. Data and Notation
+
+Let each player-match row contain:
+
+- IDs and time: \(\text{player\_id}, \text{match\_id}, \text{match\_date}, \text{season}\)
+- context: home/away, position
+- numeric match features (Understat + engineered + fixture context)
+
+After preprocessing, each player \(p\) has a time-ordered sequence:
+\[
+\{x_{p,1}, x_{p,2}, \dots, x_{p,T_p}\}, \quad x_{p,t} \in \mathbb{R}^{F}.
+\]
+
+We also maintain per-timestep context:
+
+- \(h_{p,t} \in \{0,1\}\): home/away
+- \(q_{p,t} \in \mathbb{N}\): position id
+- \(g_{p,t} \in \mathbb{R}_{\ge 0}\): days since previous match
+
+### 2.1 Time-based split
+
+If seasons are chronologically ordered \(s_1,\dots,s_K\):
+
+- train: \(s_1,\dots,s_{K-2}\)
+- validation: \(s_{K-1}\)
+- test: \(s_K\)
+
+All imputation/scaler parameters are fit on train only.
+
+---
+
+## 3. Feature Engineering and Normalization
+
+### 3.1 Per-90 transformation
+
+For stat \(u_{p,t}\) with minutes \(m_{p,t}\):
+\[
+u^{90}_{p,t} = u_{p,t} \cdot \frac{90}{\max(m_{p,t}, m_{\min})},
+\]
+where \(m_{\min}=30\) by default.
+
+### 3.2 Missing indicators
+
+For sparse features \(u\), add:
+\[
+\mathbb{1}_{\text{missing}}(u_{p,t}) \in \{0,1\}.
+\]
+
+### 3.3 Scaling
+
+For each continuous feature \(f\):
+
+1. impute with train median \(\tilde\mu_f\),
+2. standardize:
+\[
+\hat x_f = \frac{x_f - \mu_f}{\sigma_f},
+\]
+with \((\mu_f,\sigma_f)\) fit on train.
+
+---
+
+## 4. Causal Window Construction
+
+Window length is \(L\). For each target fixture index \(t\), define cutoff:
+\[
+\tau = t + s,
+\]
+where \(s=\texttt{cutoff\_shift}\). Current default: \(s=-1\), so history is up to \(t-1\).
+
+Construct right-padded window:
+\[
+X_{p,t} \in \mathbb{R}^{L \times F},
+\]
+using timesteps \([\max(1,\tau-L+1),\dots,\tau]\). Remaining trailing rows are padding.
+
+Padding mask:
+\[
+M^{\text{pad}}_{p,t,i} =
+\begin{cases}
+1, & \text{if row } i \text{ is padding}\\
+0, & \text{otherwise}
+\end{cases}
+\]
+
+Right-padding is used to avoid causal-attention numerical instability that can occur with left-padding.
+
+---
+
+## 5. Corruption Operator (Denoising Views)
+
+Two views are sampled independently per window.
+
+For valid row \(i\), feature \(j\):
+
+- feature mask: \(B^{\text{feat}}_{ij} \sim \text{Bernoulli}(p_{\text{feat}})\)
+- row mask: \(b^{\text{row}}_i \sim \text{Bernoulli}(p_{\text{match}})\), then
+  \(B^{\text{row}}_{ij}=b^{\text{row}}_i\)
+
+Final reconstruction mask:
+\[
+B_{ij} = (B^{\text{feat}}_{ij} \lor B^{\text{row}}_{ij}) \land \neg M^{\text{pad}}_i.
+\]
+
+Noise on unmasked valid entries:
+\[
+\epsilon_{ij} \sim \mathcal N(0,\sigma^2), \quad
+\tilde X_{ij} =
+\begin{cases}
+0, & B_{ij}=1\\
+X_{ij} + \epsilon_{ij}, & B_{ij}=0,\; \neg M^{\text{pad}}_i
+\end{cases}
+\]
+
+---
+
+## 6. Encoder Architecture
+
+### 6.1 Input projection and context fusion
+
+For timestep \(i\):
+\[
+h_i^{(0)} = \phi(\tilde x_i)
++ e_{\text{home}}(h_i)
++ e_{\text{recency}}(i)
++ \gamma(\log(1+g_i))
++ \mathbb{1}_{\text{pos}} \cdot e_{\text{pos}}(q_i),
+\]
+where:
+
+- \(\phi\): MLP + LayerNorm
+- \(\gamma\): small MLP for gap days
+- \(\mathbb{1}_{\text{pos}}\) is 1 only if `use_position_embedding=true`
+
+Team/opponent identity embeddings are disabled in current default.
+
+### 6.2 Temporal transformer (causal)
+
+A Transformer encoder with upper-triangular causal mask:
+\[
+A_{ij} =
+\begin{cases}
+-\infty, & j>i \\
+0, & j\le i
+\end{cases}
+\]
+plus key padding mask from \(M^{\text{pad}}\).
+
+Output sequence:
+\[
+H = \text{Transformer}(H^{(0)}, A, M^{\text{pad}}).
+\]
+
+### 6.3 Readout embedding
+
+Take last valid hidden state \(h_{\text{last}}\) and project:
+\[
+z = \frac{W_z h_{\text{last}}}{\|W_z h_{\text{last}}\|_2} \in \mathbb{R}^{d_z}.
+\]
+
+### 6.4 Reconstruction head
+
+Predict all features per timestep:
+\[
+\hat X = \psi(H),
+\]
+where \(\psi\) is a 2-layer MLP.
+
+---
+
+## 7. Training Objectives
+
+## 7.1 Masked reconstruction loss
+
+Huber loss over masked entries only:
+\[
+\mathcal L_{\text{rec}}^{(v)} =
+\frac{1}{\sum B^{(v)}}
+\sum_{i,j} B^{(v)}_{ij} \, \ell_{\delta}(\hat X^{(v)}_{ij}, X_{ij}),
+\]
+\[
+\mathcal L_{\text{rec}} = \tfrac{1}{2}\left(\mathcal L_{\text{rec}}^{(1)} + \mathcal L_{\text{rec}}^{(2)}\right).
+\]
+
+## 7.2 Mixed-role contrastive InfoNCE
+
+Given batch size \(B\), concatenate both views:
+\[
+Z = [z^{(1)}_1,\dots,z^{(1)}_B,z^{(2)}_1,\dots,z^{(2)}_B] \in \mathbb{R}^{2B \times d_z}.
+\]
+
+Positive index:
+\[
+\pi(i) = (i+B) \bmod 2B.
+\]
+
+Similarity:
+\[
+s_{ik} = \frac{\cos(Z_i,Z_k)}{\tau}.
+\]
+
+For anchor \(i\), negatives are all \(k \ne i,\pi(i)\), with role-based weight:
+\[
+w_{ik} =
+\begin{cases}
+\alpha_{\text{in}}, & r_i = r_k \\
+\alpha_{\text{cross}}, & r_i \ne r_k
+\end{cases}
+\]
+
+Weighted negative logits:
+\[
+\tilde s_{ik} = s_{ik} + \log w_{ik}.
+\]
+
+Per-anchor loss:
+\[
+\mathcal L_i = -\log
+\frac{\exp(s_{i\pi(i)})}
+{\exp(s_{i\pi(i)}) + \sum_{k\in\mathcal N_i} \exp(\tilde s_{ik})}.
+\]
+
+Batch contrastive loss:
+\[
+\mathcal L_{\text{con}} = \frac{1}{2B}\sum_{i=1}^{2B} \mathcal L_i.
+\]
+
+Current defaults: \(\alpha_{\text{cross}}=1.0\), \(\alpha_{\text{in}}=0.75\).
+
+## 7.3 Total objective
+
+\[
+\mathcal L = \mathcal L_{\text{rec}} + \lambda_{\text{con}}(e)\,\mathcal L_{\text{con}}.
+\]
+
+\(\lambda_{\text{con}}(e)\) schedule:
+
+- 0 during warmup epochs
+- linear ramp to target value
+
+---
+
+## 8. Optimization
+
+- Optimizer: AdamW
+- LR schedule: linear warmup + cosine decay
+- gradient clipping: \(\|g\|_2 \le 1\)
+- AMP enabled on CUDA
+
+Non-finite batch guard: any batch with non-finite \(\mathcal L\), \(\mathcal L_{\text{rec}}\), or \(\mathcal L_{\text{con}}\) is skipped and logged.
+
+---
+
+## 9. Why This Model
+
+1. **Causal windows (`t-1`)**
+   ensure embeddings are valid pre-match for forecasting and decision support.
+
+2. **Masked denoising reconstruction**
+   forces the encoder to capture robust multivariate temporal structure, not identity memorization.
+
+3. **Contrastive alignment across independent corruptions**
+   stabilizes representation semantics and improves neighborhood structure.
+
+4. **Mixed-role negatives**
+   avoid trivial GK-vs-outfield-only geometry while preserving role discrimination.
+
+5. **No team/opponent/player identity features**
+   pushes embeddings toward behavior and context patterns instead of lookup-table effects.
+
+6. **Optional position embedding off by default**
+   reduces leakage of explicit role labels into the embedding manifold.
+
+---
+
+## 10. Evaluation Metrics
+
+### 10.1 Same-position@k
+
+For each test embedding, retrieve \(k\) nearest neighbors by cosine similarity and compute:
+\[
+\text{SamePos@k} = \frac{1}{N}\sum_{i=1}^{N} \frac{1}{k}\sum_{j\in \text{NN}_k(i)} \mathbb{1}[\text{pos}_j = \text{pos}_i].
+\]
+
+### 10.2 Within-player coherence
+
+For player \(p\), with embeddings \(\{z_{p,t}\}\):
+\[
+\text{Coh}(p) = \frac{1}{|\mathcal P_p|} \sum_{(a,b)\in\mathcal P_p} \cos(z_{p,a}, z_{p,b}),
+\]
+where \(\mathcal P_p\) is all unordered pairs within player \(p\).
+Overall coherence is the mean over players with at least two embeddings.
+
+---
+
+## 11. Current Limitations and Extensions
+
+1. Understat-heavy features can still induce role separation if GK-specific signal is weak.
+2. Same-position retrieval can be inflated when position information leaks into training context.
+3. A single global model may underfit specialist goalkeeper dynamics.
+
+Potential extensions:
+
+- separate GK/outfield heads with shared backbone,
+- adaptive negative mining (hard negatives within outfield sub-roles),
+- downstream supervised probes for tactical role and performance prediction.
+
+---
+
+## 12. Reproducibility Artifacts
+
+The training pipeline saves:
+
+- best checkpoint (`model.pt`)
+- scaler payload (`tat_scaler.joblib`)
+- feature config (`tat_feature_config.yaml`)
+- epoch logs (`training_history.csv/json/jsonl`)
+- textual training log (`train.log`)
+- loss plot (`loss_curves.svg`)
+
+These are sufficient to reproduce inference and embedding extraction.
