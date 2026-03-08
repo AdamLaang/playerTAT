@@ -5,8 +5,6 @@ This repository trains a **causal Temporal Autoencoder Transformer (TAT)** to pr
 ## Documentation
 
 - Technical report (math + formulas): [docs/TAT_TECHNICAL_REPORT.md](docs/TAT_TECHNICAL_REPORT.md)
-- LaTeX source: [docs/TAT_TECHNICAL_REPORT.tex](docs/TAT_TECHNICAL_REPORT.tex)
-- PDF version: [docs/TAT_TECHNICAL_REPORT.pdf](docs/TAT_TECHNICAL_REPORT.pdf)
 - Package guide: [tat_player_embeddings/README.md](tat_player_embeddings/README.md)
 
 ## What The Model Does
